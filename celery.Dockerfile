@@ -14,4 +14,4 @@ RUN pip3 install -r /usr/src/requirements.txt
 
 WORKDIR /usr/src
 
-CMD celery worker -A app.celery.tasks --loglevel=info
+CMD celery -A app.celery.tasks worker --loglevel=info
