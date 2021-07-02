@@ -1,6 +1,6 @@
 FROM python:3.8
 
-COPY ./app/celery /usr/src/app/celery
+COPY ./app/celery_app /usr/src/app/celery_app
 
 COPY ./app/__init__.py /usr/src/app/
 
@@ -16,4 +16,4 @@ RUN pip3 install flower
 
 WORKDIR /usr/src
 
-CMD celery flower -A app.celery.tasks --broker=amqp://${RABBITMQ_USERNAME}:${RABBITMQ_PASSWORD}@${RABBITMQ_HOST}:${RABBITMQ_PORT}//
+CMD celery flower -A app.celery_app.tasks --broker=amqp://${RABBITMQ_USERNAME}:${RABBITMQ_PASSWORD}@${RABBITMQ_HOST}:${RABBITMQ_PORT}//
