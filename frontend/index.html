@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="style.css">
+    <title>Document</title>
+</head>
+<body>
+    <p>Input url where file exists:</p>
+    <form id="fileLinkForm" onsubmit="sendUrl(event)">
+        <input id="fileLinkInput" type="text" />
+        <input type="submit" value="Upload" />
+    </form>
+
+    <form id="fileUploadForm" method="POST" action="http://127.0.0.1:8000/upload_file?file_size=" onsubmit="fileUpload(event,this)">
+        <p class="textCenterP">Drop files in the area to upload</p>
+        <p class="textCenterP">or</p>
+        <div id="fileUploadDiv">
+            <input id="fileUploadInput" name="files" type="file" value="Select Files">
+        </div>
+        <input id="fileUploadInputButton" type="submit" value="Upload">
+    </form>
+
+    <script src="script.js"></script>
+</body>
+</html>

@@ -1,0 +1,22 @@
+#fileLinkInput {
+  width: 90%;
+}
+
+#fileUploadInput {
+  padding-bottom: 10%;
+  width: 90%;
+  margin-left: 45%;
+}
+
+#fileUploadDiv {
+  border: 1px solid black;
+}
+
+.textCenterP {
+  text-align: center;
+}
+
+#fileUploadInputButton {
+  margin-top: 5px;
+  float: right;
+}
