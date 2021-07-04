@@ -48,7 +48,6 @@ services:
       - worker
     ports:
       - "8000:8000"
-    command: "uvicorn app.main:app --port=8000"
   flower:
     build:
       context: ./

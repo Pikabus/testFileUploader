@@ -1,10 +1,6 @@
 FROM python:3.8
 
-COPY ./app/celery_app /usr/src/app/celery_app
-
-COPY ./app/__init__.py /usr/src/app/
-
-COPY ./app/config.py /usr/src/app/
+COPY ./app /usr/src/app
 
 COPY ./requirements.txt /usr/src/
 

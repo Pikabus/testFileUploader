@@ -12,3 +12,4 @@ WORKDIR /usr/src
 
 EXPOSE 8000
 
+CMD uvicorn app.main:app
