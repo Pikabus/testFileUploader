@@ -10,4 +10,5 @@ RUN pip3 install -r /usr/src/requirements.txt
 
 WORKDIR /usr/src
 
-CMD uvicorn app.main:app --port=5000
+EXPOSE 8000
+

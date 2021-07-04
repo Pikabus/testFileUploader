@@ -1,11 +1,10 @@
-import shutil
-# import redis
 import requests
 
 from fastapi import APIRouter, UploadFile, File, HTTPException
-from fastapi.responses import HTMLResponse
 from typing import List
-from celery import Celery
+
+from app.celery_app.tasks import download_file_task
+from app.api.services import custom_copyfileobj
 
 
 file_uploader_router = APIRouter()
@@ -15,10 +14,9 @@ file_uploader_router = APIRouter()
 def upload_file(file_size: int, files: List[UploadFile] = File(...)):
     # Upload multiple files
     for file in files:
-        with open(f"../../files/{file.filename}", "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
-
-    return {"state": "Files uploaded successfully!"}
+        with open(f"files/{file.filename}", "wb") as buffer:
+            custom_copyfileobj(file.file, buffer, file_size)
+    return {"File uploaded successfully!"}
 
 
 @file_uploader_router.post("/download_file")
@@ -26,19 +24,13 @@ def download_file(url: str):
     try:
         response = requests.get(url, stream=True)
     except:
-        return {"state": "Error, incorrect url or file doesn't exists!"}
-
+        raise HTTPException(
+            status_code=400, detail="Error, incorrect URL or file doesn't exists!")
     # If URL correct
     file_size = int(response.headers.get("content-length", 0))
-    if file_size == 0:
-        return {"Error, file not found!"}
-
+    if file_size <= 0:
+        raise HTTPException(
+            status_code=404, detail="Error, file doesn't exists!")
     # If URL correct and file exists
-    file_name = response.headers.get("Content-Disposition", url[-10:])
-    file_name = file_name.replace("attachment; filename=", "")
-
-    # Save file
-    with open(f"../../files/{file_name}", "wb") as file:
-        file.write()
-
-    return {"File uploaded successfully!"}
+    download_file_task.delay(url, file_size)
+    return {"Accepted!"}
