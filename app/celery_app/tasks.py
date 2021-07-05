@@ -7,6 +7,7 @@ from app.api.services import hash_file
 from app.config import REDIS_STORE_CONN_URI
 
 
+REDIS_STORE_CONN_URI = "redis://localhost:6379/0"
 redis_store = redis.Redis.from_url(REDIS_STORE_CONN_URI)
 
 
@@ -40,7 +41,7 @@ def download_file_task(url: str, file_size: int):
         response.raise_for_status()
         with open(f"files/{file_full_name}", "wb") as file:
             for chunk in response.iter_content(chunk_size):
-
+                # Print downloading progress and write file in parts
                 progress_in_percent = 100 * iter_count * chunk_size / file_size
                 if progress_in_percent <= 100:
                     print('{0:.2f}'.format(progress_in_percent))
@@ -49,9 +50,8 @@ def download_file_task(url: str, file_size: int):
                 file.write(chunk)
     print(100.00)
 
-    file_hash = str(hash_file(f"files/{file_full_name}"))
-
     # Delete file if it hash exists
+    file_hash = str(hash_file(f"files/{file_full_name}"))
     if redis_store.get(file_hash) is not None:
         file = pathlib.Path(f"files/{file_full_name}")
         file.unlink()
