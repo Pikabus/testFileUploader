@@ -1,68 +1,79 @@
-version: "3"
+version: "3.7"
+
 services:
-  krabbitmq:
-    hostname: krabbitmq
+  rabbitmq:
     image: rabbitmq:latest
     environment:
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
-    ports:
-      - "5672:5672"
-  worker:
-    build:
-      context: ./
-      dockerfile: celery.Dockerfile
-    environment:
-      - REDIS_HOST=kredis
-      - REDIS_PORT=6379
-      - REDIS_CELERY_DB_INDEX=10
-      - REDIS_STORE_DB_INDEX=0
-      - RABBITMQ_HOST=krabbitmq
+      - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_USERNAME=guest
       - RABBITMQ_PASSWORD=guest
       - RABBITMQ_PORT=5672
-    depends_on:
-      - krabbitmq
-      - kredis
-  kredis:
-    hostname: kredis
+    ports:
+      - "5672:5672"
+
+  redis:
     image: redis:latest
     ports:
       - "6379:6379"
-  api:
-    build:
-      context: ./
-      dockerfile: api.Dockerfile
+
+  celery_app:
+    build: .
     environment:
-      - REDIS_HOST=kredis
+      - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_CELERY_DB_INDEX=10
       - REDIS_STORE_DB_INDEX=0
-      - RABBITMQ_HOST=krabbitmq
+      - RABBITMQ_HOST=rabbitmq
       - RABBITMQ_USERNAME=guest
       - RABBITMQ_PASSWORD=guest
       - RABBITMQ_PORT=5672
-    volumes:
-      - ./app:/usr/src/app/
     depends_on:
-      - worker
+      - rabbitmq
+      - redis
+    volumes:
+      - ./files:/usr/src/files
+    command: "celery -A app.celery_app.tasks worker -l info -P gevent"
+
+  flower-celery:
+    build: .
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_CELERY_DB_INDEX=10
+      - REDIS_STORE_DB_INDEX=0
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_PORT=5672
+    ports:
+      - "5555:5555"
+    depends_on:
+      - rabbitmq
+      - redis
+    command: "celery flower -A app.celery_app.tasks"
+
+  api:
+    build: .
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_CELERY_DB_INDEX=10
+      - REDIS_STORE_DB_INDEX=0
+      - RABBITMQ_HOST=rabbitmq
+      - RABBITMQ_USERNAME=guest
+      - RABBITMQ_PASSWORD=guest
+      - RABBITMQ_PORT=5672
     ports:
       - "8000:8000"
-  flower:
-    build:
-      context: ./
-      dockerfile: flower.Dockerfile
-    environment:
-      - REDIS_HOST=kredis
-      - REDIS_PORT=6379
-      - REDIS_CELERY_DB_INDEX=10
-      - REDIS_STORE_DB_INDEX=0
-      - RABBITMQ_HOST=krabbitmq
-      - RABBITMQ_USERNAME=guest
-      - RABBITMQ_PASSWORD=guest
-      - RABBITMQ_PORT=5672
-    ports:
-      - 5555:5555
     depends_on:
-      - krabbitmq
-      - kredis
+      - rabbitmq
+      - redis
+    volumes:
+      - ./files:/usr/src/files
+    command: "uvicorn app.main:app --host=0.0.0.0 --port=8000"
+
+volumes:
+  rabbitmq_data:
+    driver: local
+  redis_data:
+    driver: local
