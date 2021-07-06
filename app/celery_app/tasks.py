@@ -54,7 +54,7 @@ def download_file_task(url: str, file_size: int):
     file_hash = str(hash_file(f"files/{file_full_name}"))
     if redis_store.get(file_hash) is not None:
         file = pathlib.Path(f"files/{file_full_name}")
-        file.unlink()
+        res = file.unlink()
     else:
         redis_store.set(file_hash, file_full_name)
         redis_store.set(file_full_name, file_hash)
