@@ -50,7 +50,7 @@ services:
     depends_on:
       - rabbitmq
       - redis
-    command: "celery flower -A app.celery_app.tasks"
+    command: "celery -A app.celery_app.tasks flower --port=5555"
 
   api:
     build: .
