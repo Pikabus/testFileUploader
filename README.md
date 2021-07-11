@@ -1,10 +1,12 @@
 # File uploading app
 
-This is an application for uploading files to the server
+This is an application for uploading files to the server.
+Uploading progress you can see in CLI.
 
 ## build and run containers
 
 ```bash
+mkdir files
 docker-compose up -d --build
 ```
 

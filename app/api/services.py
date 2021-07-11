@@ -1,11 +1,17 @@
 import hashlib
+import math
+
+from progress.bar import IncrementalBar
 
 
 def custom_copyfileobj(fsrc, fdst, file_size):
 
+    bar = IncrementalBar('Countdown', max=100)
+
     block_size = 2 ** 20
     cur_block_pos = 0
     iter_count = 1
+    progress_in_percent = 0
     # File uploading in parts
     while True:
         cur_block = fsrc.read(block_size)
@@ -16,12 +22,18 @@ def custom_copyfileobj(fsrc, fdst, file_size):
             fdst.write(cur_block)
 
         iter_count += 1
+
+        bar_iter = 100 * block_size * iter_count / \
+            file_size - float(progress_in_percent)
+
         progress_in_percent = 100 * block_size * iter_count / file_size
         progress_in_percent = '{0:.2f}'.format(progress_in_percent)
         if float(progress_in_percent) <= 100.00:
-            print(progress_in_percent)
+            bar.next(bar_iter)
+            # print(progress_in_percent)
         else:
-            print(100.00)
+            bar.finish()
+            # print(100.00)
 
     return {"File uploaded successfully!"}
 

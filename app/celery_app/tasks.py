@@ -2,12 +2,14 @@ import requests
 import pathlib
 import redis
 
+from celery import current_task
+
 from .worker import celery
 from app.api.services import hash_file
 from app.config import REDIS_STORE_CONN_URI
 
 
-# REDIS_STORE_CONN_URI = "redis://localhost:6379/0"
+REDIS_STORE_CONN_URI = "redis://localhost:6379/0"
 redis_store = redis.Redis.from_url(REDIS_STORE_CONN_URI)
 
 
@@ -44,11 +46,15 @@ def download_file_task(url: str, file_size: int):
                 # Print downloading progress and write file in parts
                 progress_in_percent = 100 * iter_count * chunk_size / file_size
                 if progress_in_percent <= 100:
-                    print('{0:.2f}'.format(progress_in_percent))
+                    current_task.update_state(state='PROGRESS', meta={
+                                              'process_percent': '{0:.2f}'.format(progress_in_percent)})
+                    # print('{0:.2f}'.format(progress_in_percent))
                 iter_count += 1
 
                 file.write(chunk)
-    print(100.00)
+    # print(100.00)
+    download_file_task.update_state(
+        state='PROGRESS', meta={'process_percent': '100.00'})
 
     # Delete file if it hash exists
     file_hash = str(hash_file(f"files/{file_full_name}"))

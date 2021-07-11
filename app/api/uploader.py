@@ -2,18 +2,26 @@ import requests
 import redis
 import pathlib
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, WebSocket, status
 from typing import List
 
 from app.celery_app.tasks import download_file_task
 from app.api.services import custom_copyfileobj, hash_file
+from app.api.schemas import URL
 from app.config import REDIS_STORE_CONN_URI
 
 
-# REDIS_STORE_CONN_URI = "redis://localhost:6379/0"
+REDIS_STORE_CONN_URI = "redis://localhost:6379/0"
 redis_store = redis.Redis.from_url(REDIS_STORE_CONN_URI)
 
 file_uploader_router = APIRouter()
+
+
+@file_uploader_router.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    while True:
+        await websocket.send_text(f"Progress bar: {100} %")
 
 
 @file_uploader_router.post("/upload_file")
@@ -54,8 +62,9 @@ def upload_file(file_size: int, files: List[UploadFile] = File(...)):
     return {"File uploaded successfully!"}
 
 
-@file_uploader_router.post("/download_file")
-def download_file(url: str):
+@file_uploader_router.post("/download_file", status_code=status.HTTP_202_ACCEPTED)
+def download_file(url: URL):
+    url = url.url
     try:
         response = requests.get(url, stream=True)
     except:
@@ -68,4 +77,4 @@ def download_file(url: str):
             status_code=404, detail="Error, file doesn't exists!")
     # If URL correct and file exists
     download_file_task.delay(url, file_size)
-    return {"Accepted!"}
+    return {"status": "Accepted!"}
