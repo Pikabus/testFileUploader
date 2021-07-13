@@ -38,7 +38,7 @@ def custom_copyfileobj(fsrc, fdst, file_size):
         progress_in_percent = '{0:.2f}'.format(progress_in_percent)
         if float(progress_in_percent) <= 100.00:
             bar.next(bar_iter)
-            redis_store.publish("download_file_progress", progress_in_percent)
+            redis_store.publish('download_file_progress', progress_in_percent)
             # print(progress_in_percent)
         else:
             bar.finish()

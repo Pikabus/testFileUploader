@@ -39,7 +39,7 @@ async function fileUpload(e, form) {
 
   fetch(`${form.action}${file_size}`, {method:'post', body: new FormData(form)});
   
-  // sio.emit('download_file', '');
+  sio.emit('download_file', '');
 
   e.preventDefault();
 }
