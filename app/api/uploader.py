@@ -1,8 +1,9 @@
 import requests
 import redis
-import pathlib
+import os
 
-from fastapi import APIRouter, UploadFile, File, HTTPException, WebSocket, status
+from fastapi import APIRouter, UploadFile, File, HTTPException, status
+from fastapi.responses import HTMLResponse
 from typing import List
 
 from app.celery_app.tasks import download_file_task
@@ -15,13 +16,6 @@ REDIS_STORE_CONN_URI = "redis://localhost:6379/0"
 redis_store = redis.Redis.from_url(REDIS_STORE_CONN_URI)
 
 file_uploader_router = APIRouter()
-
-
-@file_uploader_router.websocket("/ws")
-async def websocket_endpoint(websocket: WebSocket):
-    await websocket.accept()
-    while True:
-        await websocket.send_text(f"Progress bar: {100} %")
 
 
 @file_uploader_router.post("/upload_file")
@@ -37,10 +31,10 @@ def upload_file(file_size: int, files: List[UploadFile] = File(...)):
             file_extension = ""
         file_full_name = str(file_name) + "." + str(file_extension)
 
-        # Define file name. If this file name exists: file name += "file name (копия name_counter)"
+        # Define file name. If this file name exists: file name += "file_name (копия name_counter).file_extension"
         name_counter = 0
         while True:
-            if redis_store.get(file_full_name) is not None:
+            if file_full_name in os.listdir("files/"):
                 file_name = file_name.replace(f" (копия {name_counter})", "")
                 name_counter += 1
                 file_name += f" (копия {name_counter})"
@@ -54,11 +48,9 @@ def upload_file(file_size: int, files: List[UploadFile] = File(...)):
         # Delete file if it hash exists
         file_hash = str(hash_file(f"files/{file_full_name}"))
         if redis_store.get(file_hash) is not None:
-            file = pathlib.Path(f"files/{file_full_name}")
-            file.unlink()
+            os.remove(f"files/{file_full_name}")
         else:
             redis_store.set(file_hash, file_full_name)
-            redis_store.set(file_full_name, file_hash)
     return {"File uploaded successfully!"}
 
 
