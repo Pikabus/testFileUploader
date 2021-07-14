@@ -11,7 +11,7 @@ from .api.uploader import file_uploader_router
 from app.config import REDIS_STORE_CONN_URI
 
 
-REDIS_STORE_CONN_URI = "redis://localhost:6379/0"
+# REDIS_STORE_CONN_URI = "redis://localhost:6379/0"
 redis_store = AsyncRedis.from_url(REDIS_STORE_CONN_URI)
 
 

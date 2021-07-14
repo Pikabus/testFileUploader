@@ -1,25 +1,26 @@
 import requests
 import redis
 import os
+import shutil
 
 from fastapi import APIRouter, UploadFile, File, HTTPException, status
 from fastapi.responses import HTMLResponse
 from typing import List
 
 from app.celery_app.tasks import download_file_task
-from app.api.services import custom_copyfileobj, hash_file
+from app.api.services import hash_file
 from app.api.schemas import URL
 from app.config import REDIS_STORE_CONN_URI
 
 
-REDIS_STORE_CONN_URI = "redis://localhost:6379/0"
+# REDIS_STORE_CONN_URI = "redis://localhost:6379/0"
 redis_store = redis.Redis.from_url(REDIS_STORE_CONN_URI)
 
 file_uploader_router = APIRouter()
 
 
 @file_uploader_router.post("/upload_file")
-def upload_file(file_size: int, files: List[UploadFile] = File(...)):
+def upload_file(files: List[UploadFile] = File(...)):
     # Upload multiple files
     for file in files:
         # Define file full name
@@ -41,9 +42,10 @@ def upload_file(file_size: int, files: List[UploadFile] = File(...)):
                 file_full_name = file_name + "." + file_extension
             else:
                 break
+
         # Upload file on server
         with open(f"files/{file_full_name}", "wb") as buffer:
-            custom_copyfileobj(file.file, buffer, file_size)
+            shutil.copyfileobj(file.file, buffer)
 
         # Delete file if it hash exists
         file_hash = str(hash_file(f"files/{file_full_name}"))
@@ -62,11 +64,13 @@ def download_file(url: URL):
     except:
         raise HTTPException(
             status_code=400, detail="Error, incorrect URL or file doesn't exists!")
+
     # If URL correct
     file_size = int(response.headers.get("content-length", 0))
     if file_size <= 0:
         raise HTTPException(
             status_code=404, detail="Error, file doesn't exists!")
+
     # If URL correct and file exists
     download_file_task.delay(url, file_size)
     return {"status": "Accepted!"}
