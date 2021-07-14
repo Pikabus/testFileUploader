@@ -15,6 +15,9 @@ redis_store = redis.Redis.from_url(REDIS_STORE_CONN_URI)
 
 @celery.task(serializer='json')
 def download_file_task(url: str, file_size: int):
+
+    channel = redis_store.pubsub()
+
     file_full_name = url.split('/')[-1]
 
     # Define file full name
@@ -45,22 +48,20 @@ def download_file_task(url: str, file_size: int):
             for chunk in response.iter_content(chunk_size):
                 # Print downloading progress and write file in parts
                 progress_in_percent = 100 * iter_count * chunk_size / file_size
-                if progress_in_percent <= 100:
+                progress_in_percent = '{0:.2f}'.format(progress_in_percent)
+                if float(progress_in_percent) <= 100:
                     current_task.update_state(state='PROGRESS', meta={
-                                              'process_percent': '{0:.2f}'.format(progress_in_percent)})
-                    # print('{0:.2f}'.format(progress_in_percent))
+                        'process_percent': progress_in_percent
+                    })
+                    redis_store.publish('download_file_progress',
+                                        progress_in_percent)
                 iter_count += 1
 
                 file.write(chunk)
-    # print(100.00)
 
-    ps = redis_store.pubsub()
-    ps.subscribe('abc')
-    for msg in ps.listen():
-        print(msg)
-
-    download_file_task.update_state(
-        state='PROGRESS', meta={'process_percent': '100.00'})
+    download_file_task.update_state(state='PROGRESS',
+                                    meta={'process_percent': '100.00'})
+    redis_store.publish('download_file_progress', 100.00)
 
     # Delete file if it hash exists
     file_hash = str(hash_file(f"files/{file_full_name}"))

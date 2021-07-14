@@ -3,7 +3,7 @@ import math
 import socketio
 import redis
 
-from progress.bar import IncrementalBar
+# from progress.bar import IncrementalBar
 
 
 REDIS_STORE_CONN_URI = "redis://localhost:6379/0"
@@ -14,7 +14,7 @@ def custom_copyfileobj(fsrc, fdst, file_size):
 
     channel = redis_store.pubsub()
 
-    bar = IncrementalBar('Countdown', max=100)
+    # bar = IncrementalBar('Countdown', max=100)
 
     block_size = 2 ** 20
     cur_block_pos = 0
@@ -31,18 +31,17 @@ def custom_copyfileobj(fsrc, fdst, file_size):
 
         iter_count += 1
 
-        bar_iter = 100 * block_size * iter_count / \
-            file_size - float(progress_in_percent)
+        # bar_iter = 100 * block_size * iter_count / \
+        #     file_size - float(progress_in_percent)
 
         progress_in_percent = 100 * block_size * iter_count / file_size
         progress_in_percent = '{0:.2f}'.format(progress_in_percent)
         if float(progress_in_percent) <= 100.00:
-            bar.next(bar_iter)
+            # bar.next(bar_iter)
             redis_store.publish('download_file_progress', progress_in_percent)
-            # print(progress_in_percent)
         else:
-            bar.finish()
-            # print(100.00)
+            redis_store.publish('download_file_progress', 100.00)
+            # bar.finish()
 
     return {"File uploaded successfully!"}
 
