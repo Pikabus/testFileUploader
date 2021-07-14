@@ -20,3 +20,13 @@
   margin-top: 5px;
   float: right;
 }
+
+#progressBar {
+  width: 100px;
+  margin-top: 10px;
+  margin-bottom: 50px;
+  border: 1px solid black;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  text-align: center;
+}

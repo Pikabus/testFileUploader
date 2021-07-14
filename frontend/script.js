@@ -11,6 +11,7 @@ const sendUrl = async (e) => {
 
   sio.on('download_file_progress', (data) => {
     console.log(data.detail.progress_in_procent);
+    document.getElementById("progressBar").firstChild.data = `${data.detail.progress_in_procent} %`;
   });
   
 
